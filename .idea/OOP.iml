@@ -2,7 +2,7 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/01_First_Step_in_OOP_EXERCISE/08_pokemon_batlle" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/02_Classes_and_Objects_Exercise/06_Guild_System" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.13 (Advanced)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
