@@ -8,8 +8,8 @@ class Zoo:
         self.__budget = budget
         self.__animal_capacity = animal_capacity
         self.__workers_capacity = workers_capacity
-        self.animals: list = []
-        self.workers: list = []
+        self.animals: list[Animal] = []
+        self.workers: list[Worker] = []
 
     def add_animal(self, animal: Animal, price: int):
         if price <= self.__budget and self.__animal_capacity > len(self.animals):
@@ -21,13 +21,15 @@ class Zoo:
         return "Not enough space for animal"
 
     def hire_worker(self, worker: Worker):
-        if self.__workers_capacity >= len(self.workers):
+        if self.__workers_capacity > len(self.workers):
+            self.workers.append(worker)
             return f"{worker.name} the {worker.__class__.__name__} hired successfully"
         return "Not enough space for worker"
 
     def fire_worker(self, worker_name: Worker):
-        if worker_name in self.workers:
-            self.workers.remove(worker_name)
+        worker = next((w for w in self.workers if w.name == worker_name), None)
+        if worker:
+            self.workers.remove(worker)
             return f"{worker_name} fired successfully"
         return f"There is no {worker_name} in the zoo"
 
@@ -57,9 +59,16 @@ class Zoo:
     @staticmethod
     def __printing_status(data_list: list[Animal | Worker], *args):
         elements = {arg: [] for arg in args}
-        for el in elements:
-            elements[el.__class__.__name__].append(repr(el))
-        result = [f"You have {len(data_list)} {str(data_list[0].__class__.__bases__.__name__).lower()}s\n"]
-        for key, value in elements.items():
-            result += f"----- {len(value)} {key}s:\n'{'\n'.join([str(v) for v in elements.values()])}"
-        return result
+        for el in data_list:
+            class_name = el.__class__.__name__ + "s"
+            if class_name in elements:
+                elements[class_name].append(repr(el))
+
+        category = data_list[0].__class__.__bases__[0].__name__ if data_list else "element"
+        result = [f"You have {len(data_list)} {category.lower()}s"]
+
+        for key in args:
+            result.append(f"----- {len(elements[key])} {key}:")
+            result.extend(elements[key])
+
+        return "\n".join(result)
