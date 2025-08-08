@@ -1,5 +1,3 @@
-# Initialize the FactoryManager
-from factory_manager import FactoryManager
 
 factory_manager = FactoryManager("Cool Factory")
 
