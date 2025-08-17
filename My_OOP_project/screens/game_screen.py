@@ -35,7 +35,15 @@ class TowerBlockGame(Screen):
         self.game_running = False
         self.is_falling = False
         self.score = 0
-        self.score_label = Label(text="Skor: 0", size_hint=(None, None), pos=(10, Window.height - 40))
+        self.score_label = Label(
+            text="Skor: 0",
+            size_hint=(None, None),
+            pos=(10, Window.height - 60),
+            color=(1, 1, 1, 1),  # Beyaz renk RGBA
+            font_size='20sp',
+            bold=True
+        )
+
         self.add_widget(self.score_label)
         self.platform_x = None  # Kule nereye dizilmeye başladıysa, o x eksenine göre kontrol ederiz
 
@@ -104,10 +112,9 @@ class TowerBlockGame(Screen):
                 # Hiza kontrolü
                 overlap = self.get_overlap_ratio(self.moving_block.pos[0], last_block.pos[0])
 
-                if overlap >= 0.51:
+                if overlap >= 0.55:
                     # Succesfuly
-                    aligned_x = last_block.pos[0]  # Blok line maker
-                    self.moving_block.update_pos((aligned_x, y))
+                    self.moving_block.update_pos((x, y))
                     self.base_blocks.append(self.moving_block)
                     self.score += 1
                     self.score_label.text = f"Skor: {self.score}"
@@ -137,10 +144,20 @@ class TowerBlockGame(Screen):
 
     def end_game(self):
         self.game_running = False
-        self.add_widget(Label(text="Oyun Bitti!", font_size=40, pos_hint={'center_x': 0.5, 'center_y': 0.6}))
-        btn_restart = Button(text="Yeniden Başla", size_hint=(0.4, 0.2), pos_hint={'center_x': 0.5, 'center_y': 0.4})
+        self.add_widget(Label(text="Oyun Bitti!", font_size=40, pos_hint={'center_x': 0.5, 'center_y': 0.65}))
+
+        # Yeniden başlat butonu
+        btn_restart = Button(text="Yeniden Başla", size_hint=(0.4, 0.15), pos_hint={'center_x': 0.5, 'center_y': 0.45})
         btn_restart.bind(on_release=self.restart_game)
         self.add_widget(btn_restart)
+
+        # Ana menüye dön butonu
+        btn_menu = Button(text="Ana Menü", size_hint=(0.4, 0.15), pos_hint={'center_x': 0.5, 'center_y': 0.25})
+        btn_menu.bind(on_release=self.go_to_main_menu)
+        self.add_widget(btn_menu)
+
+    def go_to_main_menu(self, *args):
+        self.manager.current = 'main'
 
     def restart_game(self, *args):
         self.clear_widgets()
