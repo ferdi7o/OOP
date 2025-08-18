@@ -5,6 +5,10 @@ from screens.game_screen import TowerBlockGame
 from screens.about_screen import AboutScreen
 
 class CubeApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.max_score = 0  # Bu satırı mutlaka ekle
+
     def build(self):
         sm = ScreenManager()
         sm.add_widget(MainMenuScreen(name='main'))

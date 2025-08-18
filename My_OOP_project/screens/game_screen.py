@@ -4,27 +4,37 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.clock import Clock
-from kivy.graphics import Rectangle, Color
 from kivy.core.window import Window
+from kivy.uix.image import Image
+from kivy.resources import resource_add_path
+
+resource_add_path("assets")
 
 # Cube size
 BLOCK_WIDTH = 100
-BLOCK_HEIGHT = 30
+BLOCK_HEIGHT = 60
 BLOCK_SPEED = 4
 FALL_SPEED = 7
 
 class Block(Widget):
     def __init__(self, pos, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # sadece kwargs
         self.size = (BLOCK_WIDTH, BLOCK_HEIGHT)
         self.pos = pos
-        with self.canvas:
-            Color(0.2, 0.6, 1)
-            self.rect = Rectangle(pos=self.pos, size=self.size)
+
+        self.image = Image(
+            source="assets/door.png",
+            size=self.size,
+            pos=self.pos,
+            allow_stretch=True,
+            keep_ratio=False
+        )
+        self.add_widget(self.image)
 
     def update_pos(self, pos):
         self.pos = pos
-        self.rect.pos = pos
+        self.image.pos = pos
+
 
 class TowerBlockGame(Screen):
     def __init__(self, **kwargs):
@@ -35,16 +45,29 @@ class TowerBlockGame(Screen):
         self.game_running = False
         self.is_falling = False
         self.score = 0
+
+        self.app = App.get_running_app()
+        self.max_score = self.app.max_score
         self.score_label = Label(
             text="Skor: 0",
             size_hint=(None, None),
             pos=(10, Window.height - 60),
             color=(1, 1, 1, 1),  # Beyaz renk RGBA
             font_size='20sp',
+            bold=True)
+        self.add_widget(self.score_label)
+
+        self.max_score = 0
+        self.max_score_label = Label(
+            text="Max Skor: 0",
+            size_hint=(None, None),
+            pos=(Window.width - 150, Window.height - 60),  # Sağ üst köşeye yakın
+            color=(1, 1, 0, 1),  # Sarı
+            font_size='20sp',
             bold=True
         )
+        self.add_widget(self.max_score_label)
 
-        self.add_widget(self.score_label)
         self.platform_x = None  # Kule nereye dizilmeye başladıysa, o x eksenine göre kontrol ederiz
 
         self.bind(on_touch_down=self.drop_block)
@@ -92,7 +115,7 @@ class TowerBlockGame(Screen):
         y -= FALL_SPEED
 
         if len(self.base_blocks) == 0:
-            # first blok organizer
+            # İlk blok için
             if y <= 0:
                 y = 0
                 self.platform_x = self.moving_block.pos[0]  # İlk blok nereye düştüyse kule orada
@@ -103,26 +126,49 @@ class TowerBlockGame(Screen):
                 self.spawn_new_block()
                 return False
         else:
-            # next blok down on the first blok
+            # Diğer bloklar için
             last_block = self.base_blocks[-1]
             lx, ly = last_block.pos
+
             if y <= ly + BLOCK_HEIGHT:
                 y = ly + BLOCK_HEIGHT
 
-                # Hiza kontrolü
                 overlap = self.get_overlap_ratio(self.moving_block.pos[0], last_block.pos[0])
 
                 if overlap >= 0.55:
-                    # Succesfuly
+                    # Yeni bloğun hedef pozisyonunu belirle
                     self.moving_block.update_pos((x, y))
+
+                    # Ekranda maksimum blok sayısı (60% yüksekliğe kadar)
+                    max_blocks = int((Window.height * 0.6) // BLOCK_HEIGHT)
+
+                    if len(self.base_blocks) >= max_blocks:
+                        # 1. En alt bloğu kaldır
+                        bottom_block = self.base_blocks.pop(0)
+                        self.remove_widget(bottom_block)
+
+                        # 2. Diğer tüm blokları 1 blok aşağı kaydır
+                        for block in self.base_blocks:
+                            bx, by = block.pos
+                            block.update_pos((bx, by - BLOCK_HEIGHT))
+
+                        # 3. Yeni bloğu da aşağı kaydır
+                        mx, my = self.moving_block.pos
+                        self.moving_block.update_pos((mx, my - BLOCK_HEIGHT))
+
+                    # 4. Yeni bloğu listeye ekle
                     self.base_blocks.append(self.moving_block)
                     self.score += 1
                     self.score_label.text = f"Skor: {self.score}"
+                    if self.score > self.app.max_score:
+                        self.app.max_score = self.score
+                        self.max_score_label.text = f"Max Skor: {self.app.max_score}"
                     self.spawn_new_block()
                 else:
                     self.end_game()
                 return False
 
+        # Henüz yere çarpmadıysa düşmeye devam et
         self.moving_block.update_pos((x, y))
         return True
 
@@ -160,8 +206,39 @@ class TowerBlockGame(Screen):
         self.manager.current = 'main'
 
     def restart_game(self, *args):
+        # Skoru sıfırla
+        self.score = 0
+        self.score_label.text = "Skor: 0"
+
+        # Maksimum skoru güncelle (App içindeki kalacak)
+        self.max_score = App.get_running_app().max_score
+        self.max_score_label.text = f"Max Skor: {self.max_score}"
+
+        # Tüm blokları temizle
+        for block in self.base_blocks:
+            self.remove_widget(block)
+        self.base_blocks = []
+
+        # Düşen blok varsa onu da kaldır
+        if self.moving_block:
+            self.remove_widget(self.moving_block)
+            self.moving_block = None
+
+        # Oyun değişkenlerini sıfırla
+        self.game_running = False
+        self.is_falling = False
+        self.platform_x = None
+
+        # Ekrandaki diğer buton ve "Oyun Bitti" yazısını sil
         self.clear_widgets()
-        self.__init__()
+
+        # Skor etiketlerini tekrar ekle
+        self.add_widget(self.score_label)
+        self.add_widget(self.max_score_label)
+
+        # Oyunu yeniden başlat
+        self.start_game()
+
 
 class TowerBlockApp(App):
     def build(self):
