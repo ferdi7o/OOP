@@ -7,23 +7,24 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.image import Image
 from kivy.resources import resource_add_path
+from kivy.storage.jsonstore import JsonStore
 
 resource_add_path("assets")
 
 # Cube size
-BLOCK_WIDTH = 100
-BLOCK_HEIGHT = 60
+BLOCK_WIDTH = 80
+BLOCK_HEIGHT = 70
 BLOCK_SPEED = 4
 FALL_SPEED = 7
 
 class Block(Widget):
-    def __init__(self, pos, **kwargs):
-        super().__init__(**kwargs)  # sadece kwargs
+    def __init__(self, pos, image_source="assets/tower1.png", **kwargs):
+        super().__init__(**kwargs) # sadece kwargs
         self.size = (BLOCK_WIDTH, BLOCK_HEIGHT)
         self.pos = pos
 
         self.image = Image(
-            source="assets/door.png",
+            source=image_source,
             size=self.size,
             pos=self.pos,
             allow_stretch=True,
@@ -35,6 +36,10 @@ class Block(Widget):
         self.pos = pos
         self.image.pos = pos
 
+    # def change_image(self, new_source):
+    #     self.image.source = new_source
+    #     self.image.reload()
+
 
 class TowerBlockGame(Screen):
     def __init__(self, **kwargs):
@@ -45,6 +50,8 @@ class TowerBlockGame(Screen):
         self.game_running = False
         self.is_falling = False
         self.score = 0
+        self.app = App.get_running_app()
+        self.max_score = self.app.max_score
 
         self.app = App.get_running_app()
         self.max_score = self.app.max_score
@@ -57,7 +64,6 @@ class TowerBlockGame(Screen):
             bold=True)
         self.add_widget(self.score_label)
 
-        self.max_score = 0
         self.max_score_label = Label(
             text="Max Skor: 0",
             size_hint=(None, None),
@@ -73,7 +79,15 @@ class TowerBlockGame(Screen):
         self.bind(on_touch_down=self.drop_block)
         self.start_game()
 
+    def build(self):
+        sm = ScreenManager()
+        sm.add_widget(TowerBlockGame(name='game'))
+        sm.current = 'game'
+        return sm
+
     def start_game(self):
+        self.max_score = self.app.max_score  # Güncel max skoru al
+        self.max_score_label.text = f"Max Skor: {self.max_score}"
         # İlk blok düşsün ve kule pozisyonu belirlensin
         Clock.schedule_once(self.drop_first_block, 1)
 
@@ -163,6 +177,7 @@ class TowerBlockGame(Screen):
                     if self.score > self.app.max_score:
                         self.app.max_score = self.score
                         self.max_score_label.text = f"Max Skor: {self.app.max_score}"
+                        self.app.save_max_score(self.score)
                     self.spawn_new_block()
                 else:
                     self.end_game()
@@ -182,7 +197,16 @@ class TowerBlockGame(Screen):
         return overlap / BLOCK_WIDTH
 
     def spawn_new_block(self):
-        self.moving_block = Block(pos=(0, Window.height - 50))
+        if self.score > 30:
+            image_source = "assets/tower4.png"
+        elif self.score > 20:
+            image_source = "assets/tower3.png"
+        elif self.score > 10:
+            image_source = "assets/tower2.png"
+        else:
+            image_source = "assets/tower1.png"
+
+        self.moving_block = Block(pos=(0, Window.height - 50), image_source=image_source)
         self.add_widget(self.moving_block)
         self.moving_right = True
         self.is_falling = False
