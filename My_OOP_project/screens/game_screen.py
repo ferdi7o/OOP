@@ -8,6 +8,8 @@ from kivy.core.window import Window
 from kivy.uix.image import Image
 from kivy.resources import resource_add_path
 from kivy.storage.jsonstore import JsonStore
+from kivy.core.audio import SoundLoader
+from kivy.animation import Animation
 
 resource_add_path("assets")
 
@@ -78,6 +80,27 @@ class TowerBlockGame(Screen):
 
         self.bind(on_touch_down=self.drop_block)
         self.start_game()
+
+    def show_feedback(self, message, sound_file, volume=1.0):
+        label = Label(
+            text=message,
+            font_size='40sp',
+            color=(1, 1, 0, 1),  # Sarı renk
+            pos_hint={'center_x': 0.5, 'center_y': 0.7},
+            opacity=0
+        )
+        self.add_widget(label)
+
+        # Fade in-out animasyonu
+        anim = Animation(opacity=1, duration=0.3) + Animation(opacity=0, duration=0.5)
+        anim.bind(on_complete=lambda *args: self.remove_widget(label))
+        anim.start(label)
+
+        # Sesi çal
+        sound = SoundLoader.load(f"music/{sound_file}")
+        if sound:
+            sound.volume = volume
+            sound.play()
 
     def build(self):
         sm = ScreenManager()
@@ -152,6 +175,18 @@ class TowerBlockGame(Screen):
                 if overlap >= 0.55:
                     # Yeni bloğun hedef pozisyonunu belirle
                     self.moving_block.update_pos((x, y))
+                    # Geri bildirim hesapla
+                    self.show_feedback("", "brick_fall.wav", volume=0.3)
+                    if overlap >= 0.95:
+                        self.show_feedback("Legendary!", "legendary.wav")
+                    elif overlap >= 0.9:
+                        self.show_feedback("Amazing!", "amazing.wav")
+                    elif overlap >= 0.8:
+                        self.show_feedback("Super!", "super.wav")
+                    elif overlap >= 0.75:
+                        self.show_feedback("Nice!", "nice.wav")
+                    elif overlap >= 0.51:
+                        pass
 
                     # Ekranda maksimum blok sayısı (60% yüksekliğe kadar)
                     max_blocks = int((Window.height * 0.6) // BLOCK_HEIGHT)
@@ -213,6 +248,10 @@ class TowerBlockGame(Screen):
         Clock.schedule_interval(self.move_block, 1 / 60)
 
     def end_game(self):
+        sound = SoundLoader.load("music/game_over.wav")
+        if sound:
+            sound.play()
+
         self.game_running = False
         self.add_widget(Label(text="Oyun Bitti!", font_size=40, pos_hint={'center_x': 0.5, 'center_y': 0.65}))
 
