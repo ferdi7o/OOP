@@ -1,27 +1,21 @@
-from abc import ABC, abstractmethod
+from kivy.app import App
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
 
-class MessageService(ABC):
-    @abstractmethod
-    def send(self, message):
-        pass
+class PageFerdi(App):
+    def build(self):
+        self.label = Label(text="Hoş geldiniz, Kral Ferdi 👑")
+        button = Button(text="Tahta Bas")
+        button.bind(on_press=self.butona_basildi)
 
-class EmailService(MessageService):
-    def send(self, message):
-        print(f"E-posta gönderildi: {message}")
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(self.label)
+        layout.add_widget(button)
 
-class SMSService(MessageService):
-    def send(self, message):
-        print(f"SMS gönderildi: {message}")
+        return layout
 
-class Notification:
-    def __init__(self, service: MessageService):
-        self.service = service
+    def butona_basildi(self, instance):
+        self.label.text = "Kral Ferdi tahta bastı! 👑🔥"
 
-    def notify(self, msg):
-        self.service.send(msg)
-
-email_notifier = Notification(EmailService())
-email_notifier.notify("Toplantı saat 15:00'te.")
-
-sms_notifier = Notification(SMSService())
-sms_notifier.notify("Kodunuz: 123456")
+PageFerdi().run()
