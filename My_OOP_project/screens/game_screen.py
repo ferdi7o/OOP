@@ -50,53 +50,49 @@ class TowerBlockGame(Screen):
 
         # --- genel ayarlar ---
         self.announcements_enabled = True
-        self.announce_volume = 1.0
+        self.announce_volume = 0.3
 
         # --- layout (tüm görseller burada olacak) ---
         self.layout = FloatLayout()
         self.add_widget(self.layout)
 
         # --- skor etiketleri (tek tanım, layout içine ekliyoruz) ---
-        # self.score_label
+        # "Your Score" (sol üstte)
         self.score_label = Label(
-            text="Skor: 0",
+            text="Your Score: 0",
             size_hint=(None, None),
             size=(150, 40),
-            pos=(10, Window.height - 50),
             font_size='20sp',
-            color=(1, 1, 1, 1)
+            color=(1, 1, 1, 1),
+            halign="left",
+            valign="middle",
+            pos_hint={"x": 0.01, "top": 0.98}
         )
+        self.score_label.bind(size=self.score_label.setter("text_size"))
         self.layout.add_widget(self.score_label)
 
-        # self.max_score_label
+        # "Max Score" (Your Score'un hemen altında)
         self.max_score_label = Label(
-            text="Max Skor: 0",
+            text="Max Score: 0",
             size_hint=(None, None),
             size=(150, 40),
-            pos=(Window.width - 160, Window.height - 50),
             font_size='20sp',
-            color=(1, 1, 0, 1)
+            color=(1, 1, 0, 1),
+            halign="left",
+            valign="middle",
+            pos_hint={"x": 0.01, "top": 0.92}  # biraz aşağıya aldık
         )
+        self.max_score_label.bind(size=self.max_score_label.setter("text_size"))
         self.layout.add_widget(self.max_score_label)
 
-        # --- ayarlar ikonu (ikon dosyan varsa background veya ImageButton tercih et) ---
-        # Eğer assets/settings.png varsa ImageButton kullan:
-        try:
-            self.settings_icon = ImageButton(
-                source="assets/settings.png",
-                size_hint=(None, None),
-                size=(48, 48),
-                pos_hint={"right": 0.98, "top": 0.98}
-            )
-        except Exception:
-            # fallback: text button
-            self.settings_icon = Button(
-                text="⚙️",
-                size_hint=(None, None),
-                size=(48, 48),
-                pos_hint={"right": 0.98, "top": 0.98},
-                border=(0,0,0,0)
-            )
+        # Settings Button
+        self.settings_icon = ImageButton(
+            source="assets/settings.png",
+            size_hint=(None, None),
+            size=(48, 48),
+            pos_hint={"right": 0.98, "top": 0.98}
+        )
+
         self.settings_icon.bind(on_release=self.open_settings_popup)
         self.layout.add_widget(self.settings_icon)
 
@@ -185,7 +181,7 @@ class TowerBlockGame(Screen):
         # max score güncelle
         self.app = App.get_running_app()
         self.max_score = getattr(self.app, "max_score", 0)
-        self.max_score_label.text = f"Max Skor: {self.max_score}"
+        self.max_score_label.text = f"Max Score: {self.max_score}"
 
         # oyun değişkenleri
         self.game_running = True
@@ -244,7 +240,7 @@ class TowerBlockGame(Screen):
                 self.moving_block.update_pos((self.platform_x, y))
                 self.base_blocks.append(self.moving_block)
                 self.score = 1
-                self.score_label.text = f"Skor: {self.score}"
+                self.score_label.text = f"Your Score: {self.score}"
                 self.spawn_new_block()
                 return False
         else:
@@ -281,10 +277,10 @@ class TowerBlockGame(Screen):
 
                     self.base_blocks.append(self.moving_block)
                     self.score += 1
-                    self.score_label.text = f"Skor: {self.score}"
+                    self.score_label.text = f"Your Score: {self.score}"
                     if self.score > getattr(self.app, "max_score", 0):
                         self.app.max_score = self.score
-                        self.max_score_label.text = f"Max Skor: {self.app.max_score}"
+                        self.max_score_label.text = f"Max Score: {self.app.max_score}"
                         # app.save_max_score varsa çağır
                         if hasattr(self.app, "save_max_score"):
                             self.app.save_max_score(self.score)
@@ -328,6 +324,7 @@ class TowerBlockGame(Screen):
         # oyun bitti sesi
         g_over = SoundLoader.load("music/game_over.wav")
         if g_over:
+            g_over.volume = 0.6 #game over anoncment
             g_over.play()
 
         self.game_running = False
@@ -359,11 +356,11 @@ class TowerBlockGame(Screen):
 
         # skor sıfırla
         self.score = 0
-        self.score_label.text = "Skor: 0"
+        self.score_label.text = "Your Score: 0"
 
         # max score update
         self.app = App.get_running_app()
-        self.max_score_label.text = f"Max Skor: {getattr(self.app, 'max_score', 0)}"
+        self.max_score_label.text = f"Max Score: {getattr(self.app, 'max_score', 0)}"
 
         # tüm blokları layout'tan kaldır
         for block in list(self.base_blocks):

@@ -39,6 +39,11 @@ class SettingsPopup(Popup):
         self.announce_slider.bind(value=self.set_announce_volume)
         layout.add_widget(self.announce_slider)
 
+        # Max skor sıfırlama butonu
+        self.reset_score_btn = Button(text="🗑️ Max Skoru Sıfırla")
+        self.reset_score_btn.bind(on_release=self.reset_max_score)
+        layout.add_widget(self.reset_score_btn)
+
         # ✅ Kapat butonu
         close_btn = Button(text="Kapat", size_hint=(1, 0.2))
         close_btn.bind(on_release=self.dismiss)
@@ -68,3 +73,14 @@ class SettingsPopup(Popup):
 
     def set_announce_volume(self, instance, value):
         self.game_screen.announce_volume = value
+
+    # Max skor sıfırlama
+    def reset_max_score(self, instance):
+        app = self.game_screen.app  # App'e erişim
+        app.max_score = 0
+
+        # score.json dosyasını güncelle
+        import json
+        score_file = "score.json"
+        with open(score_file, "w", encoding="utf-8") as f:
+            json.dump({"max_score": 0}, f)
