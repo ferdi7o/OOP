@@ -45,7 +45,7 @@ class SettingsPopup(Popup):
         layout.add_widget(self.reset_score_btn)
 
         # ✅ Kapat butonu
-        close_btn = Button(text="Kapat", size_hint=(1, 0.2))
+        close_btn = Button(text="Kapat")
         close_btn.bind(on_release=self.dismiss)
         layout.add_widget(close_btn)
 

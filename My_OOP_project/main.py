@@ -1,14 +1,22 @@
 from kivy.app import App
+from kivy.utils import platform
 from kivy.uix.screenmanager import ScreenManager, Screen
 from screens.main_menu import MainMenuScreen
 from screens.game_screen import TowerBlockGame
 from screens.about_screen import AboutScreen
 from kivy.storage.jsonstore import JsonStore
+import os
 
 class CubeApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.store = JsonStore("score.json")
+        # Android uyumlu path
+        if platform == "android":
+            from android.storage import app_storage_path
+            self.data_dir = app_storage_path()
+        else:
+            self.data_dir = os.getcwd()
+        self.store = JsonStore(os.path.join(self.data_dir, "score.json"))
         self.max_score = self.load_max_score()
 
     def load_max_score(self):

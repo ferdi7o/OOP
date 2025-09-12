@@ -13,13 +13,14 @@ from kivy.core.audio import SoundLoader
 from kivy.resources import resource_add_path
 from kivy.animation import Animation
 
-from pythonProject.OOP.My_OOP_project.screens.settings_popup import SettingsPopup
+from screens.settings_popup import SettingsPopup
 
+# Window.size = (720, 1280)
 resource_add_path("assets")
 
-BLOCK_WIDTH = 80
-BLOCK_HEIGHT = 70
-BLOCK_SPEED = 4
+BLOCK_WIDTH = 180
+BLOCK_HEIGHT = 170
+BLOCK_SPEED = 7
 FALL_SPEED = 7
 
 class ImageButton(ButtonBehavior, Image):
@@ -48,6 +49,19 @@ class TowerBlockGame(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        #background settings
+        self.bg = Image(
+            source="long_background.png",
+            allow_stretch=True,
+            keep_ratio=True,
+            size_hint=(None, None),
+            width=self.width,
+        )
+        self.add_widget(self.bg)
+
+        # Layout hazır olunca konum ayarlayalım
+        self.bind(size=self._update_bg_size)
+
         # --- genel ayarlar ---
         self.announcements_enabled = True
         self.announce_volume = 0.3
@@ -66,7 +80,7 @@ class TowerBlockGame(Screen):
             color=(1, 1, 1, 1),
             halign="left",
             valign="middle",
-            pos_hint={"x": 0.01, "top": 0.98}
+            pos_hint={"x": 0.1, "top": 0.1}
         )
         self.score_label.bind(size=self.score_label.setter("text_size"))
         self.layout.add_widget(self.score_label)
@@ -80,7 +94,7 @@ class TowerBlockGame(Screen):
             color=(1, 1, 0, 1),
             halign="left",
             valign="middle",
-            pos_hint={"x": 0.01, "top": 0.92}  # biraz aşağıya aldık
+            pos_hint={"x": 0.1, "top": 0.05}  # biraz aşağıya aldık
         )
         self.max_score_label.bind(size=self.max_score_label.setter("text_size"))
         self.layout.add_widget(self.max_score_label)
@@ -89,7 +103,7 @@ class TowerBlockGame(Screen):
         self.settings_icon = ImageButton(
             source="assets/settings.png",
             size_hint=(None, None),
-            size=(48, 48),
+            size=(90, 90), # 48 to 90 Settings icon size
             pos_hint={"right": 0.98, "top": 0.98}
         )
 
@@ -126,8 +140,26 @@ class TowerBlockGame(Screen):
         # input bind
         self.bind(on_touch_down=self.drop_block)
 
-        # NOTE: artık __init__ içinde start_game() çağırmıyoruz.
-        # Oyun ekranı aktif olduğunda (on_enter) start_game() çalışacak.
+    def _update_bg_size(self, *args):
+        # genişlik ekrana otursun
+        self.bg.width = self.width
+
+        # orantılı yükseklik hesapla
+        aspect_ratio = self.bg.image_ratio  # w/h oranı
+        self.bg.height = self.bg.width / aspect_ratio
+
+        # ALT hizadan başlat
+        self.bg.y = 0
+        self.bg.x = 0
+
+    def move_background(self, step=80):
+        """Arka planı aşağıya kaydır (scroll efekti)"""
+        min_y = -(self.bg.height - self.height)  # en alt sınır
+        new_y = self.bg.y - step
+
+        if new_y >= min_y:
+            anim = Animation(y=new_y, duration=1)
+            anim.start(self.bg)
 
     # --- settings popup ---
     def open_settings_popup(self, *args):
@@ -197,7 +229,7 @@ class TowerBlockGame(Screen):
             try: self.layout.remove_widget(self.moving_block)
             except Exception: pass
 
-        self.moving_block = Block(pos=(0, Window.height - 50))
+        self.moving_block = Block(pos=(0, Window.height - 170)) # moved block position
         self.layout.add_widget(self.moving_block)
         self.moving_right = True
         self.is_falling = False
@@ -258,9 +290,9 @@ class TowerBlockGame(Screen):
                         self.show_feedback("Legendary!", sound_key="legendary")
                     elif overlap >= 0.9:
                         self.show_feedback("Amazing!", sound_key="amazing")
-                    elif overlap >= 0.8:
+                    elif overlap >= 0.85:
                         self.show_feedback("Super!", sound_key="super")
-                    elif overlap >= 0.75:
+                    elif overlap >= 0.8:
                         self.show_feedback("Nice!", sound_key="nice")
 
                     # max block logic
@@ -278,6 +310,8 @@ class TowerBlockGame(Screen):
                     self.base_blocks.append(self.moving_block)
                     self.score += 1
                     self.score_label.text = f"Your Score: {self.score}"
+                    if self.score > 8:
+                        self.move_background(20) # background mover!!!
                     if self.score > getattr(self.app, "max_score", 0):
                         self.app.max_score = self.score
                         self.max_score_label.text = f"Max Score: {self.app.max_score}"
@@ -312,7 +346,7 @@ class TowerBlockGame(Screen):
             image_source = "assets/tower1.png"
 
         # yeni blok layout içine eklensin
-        self.moving_block = Block(pos=(0, Window.height - 50), image_source=image_source)
+        self.moving_block = Block(pos=(0, Window.height - 170), image_source=image_source)
         self.layout.add_widget(self.moving_block)
         self.moving_right = True
         self.is_falling = False
@@ -350,11 +384,15 @@ class TowerBlockGame(Screen):
         self.manager.current = 'main'
 
     def restart_game(self, *args):
-        # Clock'ları temizle
+        # Clocks clean
         Clock.unschedule(self.move_block)
         Clock.unschedule(self.fall_block)
 
-        # skor sıfırla
+        #backgound position reset
+        anim = Animation(y=0, duration=1.5)  # 1.5 saniyede yavaşça geri dönsün
+        anim.start(self.bg)
+
+        # reset score
         self.score = 0
         self.score_label.text = "Your Score: 0"
 
@@ -362,7 +400,7 @@ class TowerBlockGame(Screen):
         self.app = App.get_running_app()
         self.max_score_label.text = f"Max Score: {getattr(self.app, 'max_score', 0)}"
 
-        # tüm blokları layout'tan kaldır
+        # clear all block on screen
         for block in list(self.base_blocks):
             try: self.layout.remove_widget(block)
             except Exception: pass
@@ -373,18 +411,18 @@ class TowerBlockGame(Screen):
             except Exception: pass
             self.moving_block = None
 
-        # layout temizle (bütün geçici widget'ları temizle)
+        # layout cleaner and widgets)
         self.layout.clear_widgets()
 
-        # sabit widget'ları tekrar ekle (skorlar + ikon)
+        # add normale widgets and layout)
         self.layout.add_widget(self.score_label)
         self.layout.add_widget(self.max_score_label)
         self.layout.add_widget(self.settings_icon)
 
-        # oyun değişkenlerini sıfırla
+        # reset game booleans
         self.game_running = False
         self.is_falling = False
         self.platform_x = None
 
-        # yeniden başlat
+        # restarting
         self.start_game()
