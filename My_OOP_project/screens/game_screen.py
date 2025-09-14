@@ -18,8 +18,8 @@ from screens.settings_popup import SettingsPopup
 # Window.size = (720, 1280)
 resource_add_path("assets")
 
-BLOCK_WIDTH = 180
-BLOCK_HEIGHT = 170
+BLOCK_WIDTH = 160 # last 180
+BLOCK_HEIGHT = 150 # last 170
 BLOCK_SPEED = 7
 FALL_SPEED = 7
 
@@ -85,7 +85,7 @@ class TowerBlockGame(Screen):
         self.score_label.bind(size=self.score_label.setter("text_size"))
         self.layout.add_widget(self.score_label)
 
-        # "Max Score" (Your Score'un hemen altında)
+        # "Max Score"
         self.max_score_label = Label(
             text="Max Score: 0",
             size_hint=(None, None),
@@ -110,7 +110,7 @@ class TowerBlockGame(Screen):
         self.settings_icon.bind(on_release=self.open_settings_popup)
         self.layout.add_widget(self.settings_icon)
 
-        # --- müzik (yükle fakat oynatma kontrolünü on_enter/start_game'e bırak) ---
+        # --- music (yükle fakat oynatma kontrolünü on_enter/start_game'e bırak) ---
         self.bg_music = SoundLoader.load("music/city_sound.flac")
         if self.bg_music:
             self.bg_music.loop = True
@@ -229,7 +229,7 @@ class TowerBlockGame(Screen):
             try: self.layout.remove_widget(self.moving_block)
             except Exception: pass
 
-        self.moving_block = Block(pos=(0, Window.height - 170)) # moved block position
+        self.moving_block = Block(pos=(0, Window.height - 150)) # moved block position - LAST: 170
         self.layout.add_widget(self.moving_block)
         self.moving_right = True
         self.is_falling = False
@@ -296,7 +296,7 @@ class TowerBlockGame(Screen):
                         self.show_feedback("Nice!", sound_key="nice")
 
                     # max block logic
-                    max_blocks = int((Window.height * 0.6) // BLOCK_HEIGHT)
+                    max_blocks = int((Window.height * 0.55) // BLOCK_HEIGHT)
                     if len(self.base_blocks) >= max_blocks:
                         bottom_block = self.base_blocks.pop(0)
                         try: self.layout.remove_widget(bottom_block)
@@ -336,17 +336,35 @@ class TowerBlockGame(Screen):
         return overlap / BLOCK_WIDTH
 
     def spawn_new_block(self):
-        if self.score > 30:
-            image_source = "assets/tower4.png"
-        elif self.score > 20:
-            image_source = "assets/tower3.png"
-        elif self.score > 10:
-            image_source = "assets/tower2.png"
-        else:
-            image_source = "assets/tower1.png"
+        # if self.score > 30:
+        #     image_source = "assets/tower4.png"
+        # elif self.score > 20:
+        #     image_source = "assets/tower3.png"
+        # elif self.score > 10:
+        #     image_source = "assets/tower2.png"
+        # else:
+        #     image_source = "assets/tower1.png"
 
+        if self.score < 10:
+            image_source = "assets/tower1.png"
+        elif self.score < 20:
+            image_source = "assets/tower2.png"
+        elif self.score < 30:
+            image_source = "assets/tower3.png"
+        elif self.score < 40:
+            image_source = "assets/tower4.png"
+        elif self.score < 50:
+            image_source = "assets/tower5.png"
+        elif self.score < 60:
+            image_source = "assets/tower6.png"
+        elif self.score < 70:
+            image_source = "assets/tower7.png"
+        elif self.score < 80:
+            image_source = "assets/tower8.png"
+        else:
+            image_source = "assets/tower9.png"
         # yeni blok layout içine eklensin
-        self.moving_block = Block(pos=(0, Window.height - 170), image_source=image_source)
+        self.moving_block = Block(pos=(0, Window.height - 150), image_source=image_source)
         self.layout.add_widget(self.moving_block)
         self.moving_right = True
         self.is_falling = False

@@ -10,7 +10,7 @@ class SettingsPopup(Popup):
     def __init__(self, game_screen, **kwargs):
         super().__init__(**kwargs)
         self.title = "Ayarlar"
-        self.size_hint = (0.7, 0.7)
+        self.size_hint = (0.7, 0.5) # Last: 0.7
         self.auto_dismiss = False
         self.game_screen = game_screen
 
