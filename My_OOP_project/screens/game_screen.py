@@ -137,8 +137,18 @@ class TowerBlockGame(Screen):
         self.is_falling = False
         self.platform_x = None
 
-        # input bind
-        self.bind(on_touch_down=self.drop_block)
+
+    def on_touch_down(self, touch):
+        # Önce çocuk widget’lara gönder (örneğin ayarlar ikonu)
+        if super().on_touch_down(touch):
+            return True
+
+        # Eğer dokunma ayarlar ikonunun üstündeyse oyuna etki etmesin
+        if self.settings_icon.collide_point(*touch.pos):
+            return True
+
+        # Oyun alanına dokunulduysa blok düşür
+        return self.drop_block(touch)
 
     def _update_bg_size(self, *args):
         # genişlik ekrana otursun
@@ -168,6 +178,7 @@ class TowerBlockGame(Screen):
 
     # --- screen lifecycle ---
     def on_enter(self):
+        self.restart_game()
         # ekran aktif olduğunda oyunu başlat ve müziği aç
         if not self.game_running:
             self.start_game()
@@ -223,6 +234,16 @@ class TowerBlockGame(Screen):
         # ilk bloğu bırak
         Clock.schedule_once(self.drop_first_block, 0.8)
 
+    def setting_icon_and_score_text_front_taker(self):
+        # settings icon and scor text become front!
+        self.layout.remove_widget(self.score_label)
+        self.layout.remove_widget(self.max_score_label)
+        self.layout.remove_widget(self.settings_icon)
+
+        self.layout.add_widget(self.score_label)
+        self.layout.add_widget(self.max_score_label)
+        self.layout.add_widget(self.settings_icon)
+
     def drop_first_block(self, dt):
         # önce varsa eski blokları kaldır (güvenlik)
         if self.moving_block:
@@ -234,6 +255,8 @@ class TowerBlockGame(Screen):
         self.moving_right = True
         self.is_falling = False
         Clock.schedule_interval(self.move_block, 1 / 60)
+        self.setting_icon_and_score_text_front_taker()
+
 
     def move_block(self, dt):
         if not self.game_running or self.is_falling or not self.moving_block:
@@ -336,15 +359,6 @@ class TowerBlockGame(Screen):
         return overlap / BLOCK_WIDTH
 
     def spawn_new_block(self):
-        # if self.score > 30:
-        #     image_source = "assets/tower4.png"
-        # elif self.score > 20:
-        #     image_source = "assets/tower3.png"
-        # elif self.score > 10:
-        #     image_source = "assets/tower2.png"
-        # else:
-        #     image_source = "assets/tower1.png"
-
         if self.score < 10:
             image_source = "assets/tower1.png"
         elif self.score < 20:
@@ -371,6 +385,7 @@ class TowerBlockGame(Screen):
         # zamanlayıcıyı (move_block) tekrar ayarla
         Clock.unschedule(self.move_block)
         Clock.schedule_interval(self.move_block, 1 / 60)
+        self.setting_icon_and_score_text_front_taker()
 
     def end_game(self):
         # oyun bitti sesi
