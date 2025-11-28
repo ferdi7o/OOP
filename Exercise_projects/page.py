@@ -12,14 +12,14 @@ class PageFerdi(App):
         layout = FloatLayout()
 
         self.sayi_label = Label(text=str(self.sayac),
-                                font_size=72,
-                                size_hint=(0, 0),
+                                font_size=700,
+                                size_hint=(0, 0.3),
                                 pos_hint={'x': 0.5, 'y': 0.5}
                                 )
 
         button = Button(text='Bas Bas paralari',
-                        size_hint=(0.1, 0.1),
-                        pos_hint={'x': 0.5, 'y': 0.1},
+                        size_hint=(0.3, 0.1),
+                        pos_hint={'x': 0.35, 'y': 0.1},
                         )
 
         button.bind(on_press=self.sayiyi_arttir)
